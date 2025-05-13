@@ -1,22 +1,13 @@
-# app.py
-
-"""
-pip install FlagEmbedding
-pip install fastapi
-pip install uvicorn
-"""
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from FlagEmbedding import BGEM3FlagModel, FlagReranker
 import numpy as np
-from FlagEmbedding import BGEM3FlagModel
 import json
 
 app = FastAPI(title="Embedding + Reranker API")
 
-# CORS setup (adjust in production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,7 +16,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Lazy model loading ---
 dense_model = None
 reranker_model = None
 
@@ -43,11 +33,9 @@ def get_reranker_model():
     if reranker_model is None:
         print("Loading reranker model...")
         model_path = "./models/bge-reranker-v2-m3"
-        reranker_model = BGEM3FlagModel(model_path, use_fp16=True)
+        reranker_model = FlagReranker(model_path, use_fp16=True)
         print("Reranker model loaded.")
     return reranker_model
-
-# --- Models for input/output ---
 
 class EmbeddingRequest(BaseModel):
     texts: List[str]
@@ -65,15 +53,13 @@ class RerankRequest(BaseModel):
 class RerankResponse(BaseModel):
     scores: List[float]
 
-# --- Endpoints ---
-
 @app.get("/health")
 def health_check():
     return {
         "status": "healthy",
         "models": {
             "embed": "bge-m3",
-            "reranker": "bge-reranker-base"
+            "reranker": "bge-reranker-v2-m3"
         }
     }
 
@@ -111,23 +97,15 @@ async def rerank_documents(request: RerankRequest):
 
     try:
         model = get_reranker_model()
-
         pairs = [(request.query, doc) for doc in request.documents]
-        output = model.encode(
-            sentence_pairs=pairs,
-            return_dense=False,
-            return_sparse=False,
-            return_colbert_vecs=False
-        )
+        scores = model.compute_score(pairs)  # ✅ this is a list, not a dict
 
-        scores = output['scores'].tolist()
         return { "scores": scores }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reranking documents: {str(e)}")
 
 
-# Run with: uvicorn app:app --host 0.0.0.0 --port 8000
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
