@@ -1,12 +1,6 @@
-FROM python:3.12.10-slim-bookworm
+FROM flagembedding-server:1.0
 
 USER root
-
-RUN apt update && apt upgrade && apt autoremove
-RUN pip install --upgrade pip
-RUN pip install FlagEmbedding fastapi uvicorn
-
-WORKDIR /flagembedding
 
 COPY app.py /flagembedding
 
