@@ -136,7 +136,7 @@ async def create_embeddings(request: EmbeddingRequest):
             return_colbert_vecs=False
         )
 
-        embeddings = output['dense_vecs'].tolist()
+        embeddings = output['dense_vecs'].tolist() # type: ignore
         dimensions = len(embeddings[0]) if embeddings else 0
 
         return {

@@ -2,10 +2,10 @@ FROM flagembedding-server:1.0
 
 USER root
 
-COPY app.py /flagembedding
+COPY flagembedding.py /flagembedding
 
 EXPOSE 8000
 
 WORKDIR /flagembedding
 
-CMD ["python", "app.py"]
+CMD ["python", "-u", "flagembedding.py"]

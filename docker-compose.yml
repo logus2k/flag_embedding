@@ -1,0 +1,32 @@
+services:
+
+  flagembedding:
+    profiles:
+      - default
+      - full
+    restart: unless-stopped  
+    image: flagembedding:1.0
+    container_name: flagembedding
+    hostname: flagembedding
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu
+      - CUDA_HOME=/usr/local/cuda    
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"    
+    networks:
+      - pm
+    ports:
+      - "8000:8000"
+    volumes:
+      - ~/env/logos/data:/flagembedding/data:ro
+
+
+networks:
+  pm:
+    name: pm-network
+    external: true
